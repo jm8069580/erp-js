@@ -1,7 +1,14 @@
-import { Outlet, useNavigate } from 'react-router-dom';
+import { Outlet, useNavigate, NavLink } from 'react-router-dom';
 import { useAuthStore } from '../store/auth.store';
-import { LogOut, Menu, X } from 'lucide-react';
+import { LogOut, Menu, X, LayoutDashboard, Users, Package, ShoppingCart } from 'lucide-react';
 import { useState } from 'react';
+
+const navItems = [
+  { to: '/', label: 'Dashboard', icon: LayoutDashboard },
+  { to: '/users', label: 'Usuarios', icon: Users },
+  { to: '/products', label: 'Productos', icon: Package },
+  { to: '/sales', label: 'Ventas', icon: ShoppingCart },
+];
 
 export default function MainLayout() {
   const { user, logout } = useAuthStore();
@@ -33,30 +40,23 @@ export default function MainLayout() {
 
         <nav className="mt-6 px-4">
           <div className="space-y-1">
-            <a
-              href="#"
-              className="flex items-center px-3 py-2 text-sm font-medium text-primary-600 bg-primary-50 rounded-lg"
-            >
-              Dashboard
-            </a>
-            <a
-              href="#"
-              className="flex items-center px-3 py-2 text-sm font-medium text-gray-600 hover:bg-gray-50 rounded-lg"
-            >
-              Usuarios
-            </a>
-            <a
-              href="#"
-              className="flex items-center px-3 py-2 text-sm font-medium text-gray-600 hover:bg-gray-50 rounded-lg"
-            >
-              Productos
-            </a>
-            <a
-              href="#"
-              className="flex items-center px-3 py-2 text-sm font-medium text-gray-600 hover:bg-gray-50 rounded-lg"
-            >
-              Ventas
-            </a>
+            {navItems.map((item) => (
+              <NavLink
+                key={item.to}
+                to={item.to}
+                end={item.to === '/'}
+                className={({ isActive }) =>
+                  `flex items-center gap-3 px-3 py-2 text-sm font-medium rounded-lg ${
+                    isActive
+                      ? 'text-primary-600 bg-primary-50'
+                      : 'text-gray-600 hover:bg-gray-50'
+                  }`
+                }
+              >
+                <item.icon className="h-5 w-5" />
+                {item.label}
+              </NavLink>
+            ))}
           </div>
         </nav>
       </aside>

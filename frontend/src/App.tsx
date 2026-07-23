@@ -2,6 +2,8 @@ import { Routes, Route, Navigate } from 'react-router-dom';
 import { useAuthStore } from './store/auth.store';
 import LoginPage from './pages/LoginPage';
 import DashboardPage from './pages/DashboardPage';
+import UsersPage from './pages/UsersPage';
+import ProductsPage from './pages/ProductsPage';
 import MainLayout from './layouts/MainLayout';
 
 function App() {
@@ -18,6 +20,8 @@ function App() {
         element={isAuthenticated ? <MainLayout /> : <Navigate to="/login" replace />}
       >
         <Route index element={<DashboardPage />} />
+        <Route path="users" element={<UsersPage />} />
+        <Route path="products" element={<ProductsPage />} />
       </Route>
       <Route path="*" element={<Navigate to="/" replace />} />
     </Routes>
