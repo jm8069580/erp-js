@@ -1,15 +1,44 @@
+import { useEffect, useState } from 'react';
 import { useAuthStore } from '../store/auth.store';
+import { api } from '../services/api';
 import { Users, Package, ShoppingCart, TrendingUp } from 'lucide-react';
 
-const stats = [
-  { name: 'Usuarios', value: '12', icon: Users, color: 'bg-blue-500' },
-  { name: 'Productos', value: '48', icon: Package, color: 'bg-green-500' },
-  { name: 'Ventas', value: '24', icon: ShoppingCart, color: 'bg-yellow-500' },
-  { name: 'Ingresos', value: '$12,450', icon: TrendingUp, color: 'bg-purple-500' },
-];
+interface Stats {
+  users: { total: number; active: number };
+  products: { total: number; active: number };
+  sales: number;
+  revenue: number;
+}
 
 export default function DashboardPage() {
   const user = useAuthStore((state) => state.user);
+  const [stats, setStats] = useState<Stats | null>(null);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    api
+      .get<Stats>('/stats')
+      .then((res) => setStats(res.data))
+      .catch(() => {})
+      .finally(() => setLoading(false));
+  }, []);
+
+  const cards = [
+    {
+      name: 'Usuarios',
+      value: stats ? String(stats.users.total) : loading ? '...' : '—',
+      icon: Users,
+      color: 'bg-blue-500',
+    },
+    {
+      name: 'Productos',
+      value: stats ? String(stats.products.total) : loading ? '...' : '—',
+      icon: Package,
+      color: 'bg-green-500',
+    },
+    { name: 'Ventas', value: '—', icon: ShoppingCart, color: 'bg-yellow-500' },
+    { name: 'Ingresos', value: '—', icon: TrendingUp, color: 'bg-purple-500' },
+  ];
 
   return (
     <div>
@@ -23,23 +52,23 @@ export default function DashboardPage() {
       </div>
 
       <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-4">
-        {stats.map((stat) => (
+        {cards.map((card) => (
           <div
-            key={stat.name}
+            key={card.name}
             className="bg-white overflow-hidden shadow rounded-lg"
           >
             <div className="p-5">
               <div className="flex items-center">
-                <div className={`flex-shrink-0 ${stat.color} rounded-md p-3`}>
-                  <stat.icon className="h-6 w-6 text-white" />
+                <div className={`flex-shrink-0 ${card.color} rounded-md p-3`}>
+                  <card.icon className="h-6 w-6 text-white" />
                 </div>
                 <div className="ml-5 w-0 flex-1">
                   <dl>
                     <dt className="text-sm font-medium text-gray-500 truncate">
-                      {stat.name}
+                      {card.name}
                     </dt>
                     <dd className="text-lg font-semibold text-gray-900">
-                      {stat.value}
+                      {card.value}
                     </dd>
                   </dl>
                 </div>
