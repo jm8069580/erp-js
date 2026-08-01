@@ -1,13 +1,12 @@
 import { Outlet, useNavigate, NavLink } from 'react-router-dom';
 import { useAuthStore } from '../store/auth.store';
-import { LogOut, Menu, X, LayoutDashboard, Users, Package, ShoppingCart } from 'lucide-react';
+import { LogOut, Menu, X, LayoutDashboard, Users, Package } from 'lucide-react';
 import { useState } from 'react';
 
 const navItems = [
   { to: '/', label: 'Dashboard', icon: LayoutDashboard },
   { to: '/users', label: 'Usuarios', icon: Users },
   { to: '/products', label: 'Productos', icon: Package },
-  { to: '/sales', label: 'Ventas', icon: ShoppingCart },
 ];
 
 export default function MainLayout() {

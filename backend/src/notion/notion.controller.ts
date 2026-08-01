@@ -1,4 +1,4 @@
-import { Controller, Get, Post, Body, Param, UseGuards } from '@nestjs/common';
+import { Controller, Get, Post, Body, Param, Query, UseGuards } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiResponse, ApiBearerAuth } from '@nestjs/swagger';
 import { NotionService } from './notion.service';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
@@ -36,7 +36,7 @@ export class NotionController {
 
   @Get('search')
   @ApiOperation({ summary: 'Search Notion' })
-  async search(@Body() body: { query: string }) {
-    return this.notionService.search(body.query);
+  async search(@Query('query') query: string) {
+    return this.notionService.search(query);
   }
 }

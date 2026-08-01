@@ -38,7 +38,7 @@ cp .env.example .env
 # Editar .env con tus datos de PostgreSQL
 
 # Instalar Prisma
-npx prisma install
+npx prisma generate
 
 # Crear base de datos
 npx prisma db push
