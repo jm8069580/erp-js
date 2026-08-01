@@ -14,15 +14,19 @@ import { ProductsService } from './products.service';
 import { CreateProductDto } from './dto/create-product.dto';
 import { UpdateProductDto } from './dto/update-product.dto';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
+import { RolesGuard } from '../common/guards/roles.guard';
+import { Roles } from '../common/decorators/roles.decorator';
+import { Role } from '@prisma/client';
 
 @ApiTags('Products')
 @Controller('products')
-@UseGuards(JwtAuthGuard)
+@UseGuards(JwtAuthGuard, RolesGuard)
 @ApiBearerAuth()
 export class ProductsController {
   constructor(private readonly productsService: ProductsService) {}
 
   @Post()
+  @Roles(Role.ADMIN, Role.MANAGER)
   @ApiOperation({ summary: 'Create a new product' })
   create(@Body() createProductDto: CreateProductDto) {
     return this.productsService.create(createProductDto);
@@ -41,6 +45,7 @@ export class ProductsController {
   }
 
   @Patch(':id')
+  @Roles(Role.ADMIN, Role.MANAGER)
   @ApiOperation({ summary: 'Update product' })
   update(
     @Param('id', ParseUUIDPipe) id: string,
@@ -50,6 +55,7 @@ export class ProductsController {
   }
 
   @Delete(':id')
+  @Roles(Role.ADMIN, Role.MANAGER)
   @ApiOperation({ summary: 'Delete product' })
   remove(@Param('id', ParseUUIDPipe) id: string) {
     return this.productsService.remove(id);
