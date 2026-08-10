@@ -30,7 +30,6 @@
     "@nestjs/passport": "^10.0.0",
     "@nestjs/platform-express": "^10.4.0",
     "@nestjs/swagger": "^7.4.0",
-    "@notionhq/client": "^5.23.2",
     "@prisma/client": "^6.2.0",
     "bcryptjs": "^2.4.3",
     "class-transformer": "^0.5.1",
