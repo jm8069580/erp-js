@@ -27,6 +27,10 @@ export class AuthService {
       throw new UnauthorizedException('Invalid credentials');
     }
 
+    if (!user.isActive) {
+      throw new UnauthorizedException('User is deactivated');
+    }
+
     const payload = {
       sub: user.id,
       email: user.email,
