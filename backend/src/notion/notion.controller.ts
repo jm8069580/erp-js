@@ -46,6 +46,12 @@ export class NotionController {
     return this.notionService.appendBlocks(id, body.blocks);
   }
 
+  @Post('docs')
+  @ApiOperation({ summary: 'Generate and publish ERP documentation to Notion' })
+  async syncDocumentation(@Body() body: { parentPageId?: string }) {
+    return this.notionService.syncDocumentation(body.parentPageId);
+  }
+
   @Get('search')
   @ApiOperation({ summary: 'Search Notion' })
   async search(@Query('query') query: string) {
