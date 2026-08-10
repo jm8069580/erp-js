@@ -1,4 +1,5 @@
 import axios from 'axios';
+import { useAuthStore } from '../store/auth.store';
 
 export const api = axios.create({
   baseURL: '/api/v1',
@@ -8,12 +9,9 @@ export const api = axios.create({
 });
 
 api.interceptors.request.use((config) => {
-  const stored = localStorage.getItem('erp-auth-storage');
-  if (stored) {
-    const { state } = JSON.parse(stored);
-    if (state?.token) {
-      config.headers.Authorization = `Bearer ${state.token}`;
-    }
+  const { token } = useAuthStore.getState();
+  if (token) {
+    config.headers.Authorization = `Bearer ${token}`;
   }
   return config;
 });
@@ -22,8 +20,7 @@ api.interceptors.response.use(
   (response) => response,
   (error) => {
     if (error.response?.status === 401) {
-      localStorage.removeItem('erp-auth-storage');
-      window.location.href = '/login';
+      useAuthStore.getState().logout();
     }
     return Promise.reject(error);
   },
