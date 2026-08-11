@@ -6,6 +6,7 @@ import DashboardPage from './pages/DashboardPage';
 import UsersPage from './pages/UsersPage';
 import ProductsPage from './pages/ProductsPage';
 import MainLayout from './layouts/MainLayout';
+import RequireRole from './components/RequireRole';
 
 function App() {
   const user = useAuthStore((state) => state.user);
@@ -37,7 +38,14 @@ function App() {
         element={isAuthenticated ? <MainLayout /> : <Navigate to="/login" replace />}
       >
         <Route index element={<DashboardPage />} />
-        <Route path="users" element={<UsersPage />} />
+        <Route
+          path="users"
+          element={
+            <RequireRole roles={['ADMIN']}>
+              <UsersPage />
+            </RequireRole>
+          }
+        />
         <Route path="products" element={<ProductsPage />} />
       </Route>
       <Route path="*" element={<Navigate to="/" replace />} />

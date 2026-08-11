@@ -5,6 +5,7 @@ import { z } from 'zod';
 import { api } from '../services/api';
 import { Package, Trash2, Pencil, Plus } from 'lucide-react';
 import Modal from '../components/Modal';
+import { useAuthStore } from '../store/auth.store';
 
 interface Product {
   id: string;
@@ -38,6 +39,9 @@ const emptyForm: ProductFormData = {
 };
 
 export default function ProductsPage() {
+  const user = useAuthStore((state) => state.user);
+  const canManage = user != null && ['ADMIN', 'MANAGER'].includes(user.role);
+
   const [products, setProducts] = useState<Product[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -136,13 +140,15 @@ export default function ProductsPage() {
           </h1>
           <p className="mt-1 text-sm text-gray-600">Gestión de productos del inventario</p>
         </div>
-        <button
-          onClick={openCreate}
-          className="flex items-center gap-2 px-4 py-2 text-sm font-medium text-white bg-primary-600 hover:bg-primary-700 rounded-lg"
-        >
-          <Plus className="h-4 w-4" />
-          Nuevo producto
-        </button>
+        {canManage && (
+          <button
+            onClick={openCreate}
+            className="flex items-center gap-2 px-4 py-2 text-sm font-medium text-white bg-primary-600 hover:bg-primary-700 rounded-lg"
+          >
+            <Plus className="h-4 w-4" />
+            Nuevo producto
+          </button>
+        )}
       </div>
 
       {error && (
@@ -165,7 +171,9 @@ export default function ProductsPage() {
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Precio</th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Stock</th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Estado</th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Acciones</th>
+                {canManage && (
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Acciones</th>
+                )}
               </tr>
             </thead>
             <tbody className="bg-white divide-y divide-gray-200">
@@ -195,7 +203,8 @@ export default function ProductsPage() {
                       {product.isActive ? 'Activo' : 'Inactivo'}
                     </span>
                   </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm">
+                  {canManage && (
+                    <td className="px-6 py-4 whitespace-nowrap text-sm">
                     <button
                       onClick={() => openEdit(product)}
                       className="text-gray-500 hover:text-primary-600 mr-3"
@@ -210,7 +219,8 @@ export default function ProductsPage() {
                     >
                       <Trash2 className="h-4 w-4" />
                     </button>
-                  </td>
+                    </td>
+                  )}
                 </tr>
               ))}
             </tbody>

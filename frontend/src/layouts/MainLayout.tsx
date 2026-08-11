@@ -4,9 +4,9 @@ import { LogOut, Menu, X, LayoutDashboard, Users, Package } from 'lucide-react';
 import { useState } from 'react';
 
 const navItems = [
-  { to: '/', label: 'Dashboard', icon: LayoutDashboard },
-  { to: '/users', label: 'Usuarios', icon: Users },
-  { to: '/products', label: 'Productos', icon: Package },
+  { to: '/', label: 'Dashboard', icon: LayoutDashboard, roles: null as string[] | null },
+  { to: '/users', label: 'Usuarios', icon: Users, roles: ['ADMIN'] },
+  { to: '/products', label: 'Productos', icon: Package, roles: null },
 ];
 
 export default function MainLayout() {
@@ -18,6 +18,10 @@ export default function MainLayout() {
     await logout();
     navigate('/login');
   };
+
+  const visibleNavItems = navItems.filter(
+    (item) => !item.roles || (user && item.roles.includes(user.role)),
+  );
 
   return (
     <div className="min-h-screen bg-gray-100">
@@ -39,7 +43,7 @@ export default function MainLayout() {
 
         <nav className="mt-6 px-4">
           <div className="space-y-1">
-            {navItems.map((item) => (
+            {visibleNavItems.map((item) => (
               <NavLink
                 key={item.to}
                 to={item.to}
