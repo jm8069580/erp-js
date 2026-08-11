@@ -48,8 +48,4 @@ export class AuthService {
       },
     };
   }
-
-  async validateUser(userId: string) {
-    return this.usersService.findOne(userId);
-  }
 }
