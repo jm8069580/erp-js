@@ -1,3 +1,4 @@
+import { useEffect } from 'react';
 import { Routes, Route, Navigate } from 'react-router-dom';
 import { useAuthStore } from './store/auth.store';
 import LoginPage from './pages/LoginPage';
@@ -7,7 +8,23 @@ import ProductsPage from './pages/ProductsPage';
 import MainLayout from './layouts/MainLayout';
 
 function App() {
-  const isAuthenticated = useAuthStore((state) => state.isAuthenticated);
+  const user = useAuthStore((state) => state.user);
+  const restored = useAuthStore((state) => state.restored);
+  const restoreSession = useAuthStore((state) => state.restoreSession);
+
+  useEffect(() => {
+    void restoreSession();
+  }, [restoreSession]);
+
+  if (!restored) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-gray-50">
+        <p className="text-gray-500">Cargando...</p>
+      </div>
+    );
+  }
+
+  const isAuthenticated = user !== null;
 
   return (
     <Routes>

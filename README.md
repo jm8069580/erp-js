@@ -93,7 +93,8 @@ erp-js/
 ## API Endpoints
 
 ### Auth
-- `POST /api/v1/auth/login` - Login
+- `POST /api/v1/auth/login` - Login (establece cookie de sesión `httpOnly`)
+- `POST /api/v1/auth/logout` - Logout (limpia la cookie de sesión)
 - `GET /api/v1/auth/profile` - Obtener perfil
 
 ### Users (escritura solo ADMIN)
@@ -124,11 +125,17 @@ Las variables de entorno aceptadas son (ver `backend/.env.example`):
 | `PORT` | Puerto HTTP | `3001` |
 | `API_PREFIX` | Prefijo global de la API | `api/v1` |
 | `CORS_ORIGINS` | Orígenes permitidos (separados por coma; vacío = permitir todos) | `http://localhost:5173` |
+| `COOKIE_SECURE` | Marcar la cookie de sesión como `Secure` (usar `true` solo en HTTPS) | `false` |
+| `COOKIE_MAX_AGE_MS` | Duración de la cookie de sesión | `3600000` |
 | `NOTION_TOKEN` | Token de API de Notion (opcional) | vacío |
 | `NOTION_DOCS_PAGE_ID` | ID de página padre de la documentación | vacío |
 | `ADMIN_EMAIL` / `ADMIN_PASSWORD` | Usuario admin del seed | `admin@erp.com` / `admin123` |
 
 El puerto y el prefijo se leen de las variables de entorno (`PORT`, `API_PREFIX`).
+
+### Autenticación
+
+La sesión se maneja con una cookie `httpOnly` (`access_token`) en lugar de almacenar el JWT en `localStorage`, lo que reduce el riesgo de robo del token vía XSS. El backend acepta el token tanto por cookie como por header `Authorization: Bearer`. El backend debe habilitarse con CORS `credentials` (ya configurado en `main.ts`) y el frontend usa `withCredentials`.
 
 ### Frontend
 

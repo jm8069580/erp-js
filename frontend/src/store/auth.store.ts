@@ -2,7 +2,7 @@ import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
 import { api } from '../services/api';
 
-interface User {
+export interface AuthUser {
   id: string;
   email: string;
   firstName: string;
@@ -11,52 +11,56 @@ interface User {
 }
 
 interface AuthState {
-  user: User | null;
-  token: string | null;
-  isAuthenticated: boolean;
+  user: AuthUser | null;
+  restored: boolean;
   login: (email: string, password: string) => Promise<void>;
-  logout: () => void;
-  setUser: (user: User) => void;
+  logout: () => Promise<void>;
+  restoreSession: () => Promise<void>;
+  clearAuth: () => void;
+  setUser: (user: AuthUser) => void;
 }
 
 export const useAuthStore = create<AuthState>()(
   persist(
     (set) => ({
       user: null,
-      token: null,
-      isAuthenticated: false,
+      restored: false,
 
       login: async (email: string, password: string) => {
-        const response = await api.post('/auth/login', { email, password });
-        const { access_token, user } = response.data;
-
-        api.defaults.headers.common['Authorization'] = `Bearer ${access_token}`;
-
-        set({
-          user,
-          token: access_token,
-          isAuthenticated: true,
+        const response = await api.post<{ user: AuthUser }>('/auth/login', {
+          email,
+          password,
         });
+        set({ user: response.data.user });
       },
 
-      logout: () => {
-        delete api.defaults.headers.common['Authorization'];
-        set({
-          user: null,
-          token: null,
-          isAuthenticated: false,
-        });
+      logout: async () => {
+        try {
+          await api.post('/auth/logout');
+        } catch {
+          // El token ya no es válido; se limpia igualmente la sesión local.
+        }
+        set({ user: null });
       },
+
+      restoreSession: async () => {
+        try {
+          const response = await api.get<AuthUser>('/auth/profile');
+          set({ user: response.data });
+        } catch {
+          set({ user: null });
+        } finally {
+          set({ restored: true });
+        }
+      },
+
+      clearAuth: () => set({ user: null }),
 
       setUser: (user) => set({ user }),
     }),
     {
       name: 'erp-auth-storage',
-      partialize: (state) => ({
-        user: state.user,
-        token: state.token,
-        isAuthenticated: state.isAuthenticated,
-      }),
+      partialize: (state) => ({ user: state.user }),
     },
   ),
 );
