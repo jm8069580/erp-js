@@ -34,7 +34,7 @@ export default function LoginPage() {
     try {
       await login(data.email, data.password);
       navigate('/');
-    } catch (err) {
+    } catch {
       setError('Credenciales inválidas');
     } finally {
       setIsLoading(false);
