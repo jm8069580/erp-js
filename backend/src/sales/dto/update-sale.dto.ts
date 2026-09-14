@@ -8,6 +8,11 @@ export class UpdateSaleDto {
   @IsOptional()
   customerName?: string;
 
+  @ApiPropertyOptional({ example: 'uuid-del-cliente' })
+  @IsString()
+  @IsOptional()
+  customerId?: string;
+
   @ApiPropertyOptional({ enum: SaleStatus })
   @IsEnum(SaleStatus)
   @IsOptional()

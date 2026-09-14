@@ -51,10 +51,30 @@ model Product {
   @@map("products")
 }
 
+model Customer {
+  id        String   @id @default(uuid())
+  number    Int      @unique @default(autoincrement())
+  name      String
+  email     String?
+  phone     String?
+  address   String?
+  taxId     String?
+  notes     String?
+  isActive  Boolean  @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  sales Sale[]
+
+  @@map("customers")
+}
+
 model Sale {
   id           String     @id @default(uuid())
   number       Int        @unique @default(autoincrement())
   customerName String?
+  customerId   String?
+  customer     Customer?  @relation(fields: [customerId], references: [id])
   status       SaleStatus @default(COMPLETED)
   total        Float      @default(0)
   createdById  String

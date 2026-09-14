@@ -31,6 +31,11 @@ export class CreateSaleDto {
   @IsOptional()
   customerName?: string;
 
+  @ApiPropertyOptional({ example: 'uuid-del-cliente' })
+  @IsString()
+  @IsOptional()
+  customerId?: string;
+
   @ApiPropertyOptional({ enum: SaleStatus, default: SaleStatus.COMPLETED })
   @IsEnum(SaleStatus)
   @IsOptional()

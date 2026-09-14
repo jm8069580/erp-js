@@ -29,6 +29,9 @@ describe('SalesService', () => {
         findUnique: jest.fn(),
         update: jest.fn(),
       },
+      customer: {
+        findUnique: jest.fn(),
+      },
       sale: {
         findUnique: jest.fn(),
         findMany: jest.fn(),
@@ -104,6 +107,50 @@ describe('SalesService', () => {
           'user-1',
         ),
       ).rejects.toThrow(BadRequestException);
+      expect(prisma.sale.create).not.toHaveBeenCalled();
+    });
+
+    it('links a customer by id and uses its name', async () => {
+      prisma.customer.findUnique.mockResolvedValue({
+        id: 'cust-1',
+        name: 'Cliente Registrado',
+        isActive: true,
+      });
+      prisma.product.findUnique.mockResolvedValue(product);
+      prisma.product.update.mockResolvedValue({ ...product, stock: 8 });
+      prisma.sale.create.mockResolvedValue({ id: 'sale-1' });
+
+      await service.create(
+        {
+          customerId: 'cust-1',
+          items: [{ productId: 'prod-1', quantity: 2 }],
+        },
+        'user-1',
+      );
+
+      expect(prisma.customer.findUnique).toHaveBeenCalledWith({
+        where: { id: 'cust-1' },
+      });
+      expect(prisma.sale.create).toHaveBeenCalledWith(
+        expect.objectContaining({
+          data: expect.objectContaining({
+            customerName: 'Cliente Registrado',
+            customerId: 'cust-1',
+          }),
+        }),
+      );
+    });
+
+    it('rejects an unknown or inactive customer', async () => {
+      prisma.customer.findUnique.mockResolvedValue(null);
+
+      await expect(
+        service.create(
+          { customerId: 'cust-x', items: [{ productId: 'prod-1', quantity: 1 }] },
+          'user-1',
+        ),
+      ).rejects.toThrow(BadRequestException);
+      expect(prisma.product.findUnique).not.toHaveBeenCalled();
       expect(prisma.sale.create).not.toHaveBeenCalled();
     });
 
@@ -188,6 +235,41 @@ describe('SalesService', () => {
         where: { id: 'prod-1' },
         data: { stock: { increment: 2 } },
       });
+      expect(prisma.customer.findUnique).not.toHaveBeenCalled();
+    });
+
+    it('(re)connects a customer by id and updates the name', async () => {
+      prisma.sale.findUnique.mockResolvedValue({ ...saleWithItems });
+      prisma.customer.findUnique.mockResolvedValue({
+        id: 'cust-1',
+        name: 'María González',
+        isActive: true,
+      });
+      prisma.sale.update.mockResolvedValue({ id: 'sale-1' });
+
+      await service.update('sale-1', { customerId: 'cust-1' });
+
+      expect(prisma.customer.findUnique).toHaveBeenCalledWith({
+        where: { id: 'cust-1' },
+      });
+      expect(prisma.sale.update).toHaveBeenCalledWith({
+        where: { id: 'sale-1' },
+        data: expect.objectContaining({
+          customerName: 'María González',
+          customer: { connect: { id: 'cust-1' } },
+        }),
+        include: expect.any(Object),
+      });
+    });
+
+    it('rejects an unknown customer id on update', async () => {
+      prisma.sale.findUnique.mockResolvedValue({ ...saleWithItems });
+      prisma.customer.findUnique.mockResolvedValue(null);
+
+      await expect(
+        service.update('sale-1', { customerId: 'cust-x' }),
+      ).rejects.toThrow(BadRequestException);
+      expect(prisma.sale.update).not.toHaveBeenCalled();
     });
 
     it('re-decrements stock when reactivating a cancelled sale', async () => {

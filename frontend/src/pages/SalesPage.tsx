@@ -22,6 +22,12 @@ interface Product {
   isActive: boolean;
 }
 
+interface Customer {
+  id: string;
+  name: string;
+  isActive: boolean;
+}
+
 interface SaleItem {
   id: string;
   productId: string;
@@ -67,6 +73,7 @@ export default function SalesPage() {
 
   const [sales, setSales] = useState<Sale[]>([]);
   const [products, setProducts] = useState<Product[]>([]);
+  const [customers, setCustomers] = useState<Customer[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -76,6 +83,7 @@ export default function SalesPage() {
   const [formError, setFormError] = useState<string | null>(null);
 
   const [customerName, setCustomerName] = useState('');
+  const [customerId, setCustomerId] = useState('');
   const [lines, setLines] = useState<Line[]>([{ ...emptyLine }]);
 
   const fetchSales = async () => {
@@ -95,13 +103,28 @@ export default function SalesPage() {
       .get<Product[]>('/products')
       .then((res) => setProducts(res.data))
       .catch(() => {});
+    api
+      .get<Customer[]>('/customers')
+      .then((res) =>
+        setCustomers(res.data.filter((customer) => customer.isActive)),
+      )
+      .catch(() => {});
   }, []);
 
   const openCreate = () => {
     setCustomerName('');
+    setCustomerId('');
     setLines([{ ...emptyLine }]);
     setFormError(null);
     setCreateOpen(true);
+  };
+
+  const handleCustomerChange = (id: string) => {
+    setCustomerId(id);
+    if (id) {
+      const customer = customers.find((c) => c.id === id);
+      if (customer) setCustomerName(customer.name);
+    }
   };
 
   const updateLine = (index: number, patch: Partial<Line>) => {
@@ -133,6 +156,7 @@ export default function SalesPage() {
     try {
       await api.post('/sales', {
         customerName: customerName.trim() || undefined,
+        customerId: customerId || undefined,
         items: lines.map((line) => ({
           productId: line.productId,
           quantity: line.quantity,
@@ -311,12 +335,26 @@ export default function SalesPage() {
             <label htmlFor="sale-customer" className={labelClassName}>
               Cliente
             </label>
+            <select
+              id="sale-customer-select"
+              value={customerId}
+              onChange={(e) => handleCustomerChange(e.target.value)}
+              className={inputClassName}
+            >
+              <option value="">Cliente libre (escribir nombre)</option>
+              {customers.map((customer) => (
+                <option key={customer.id} value={customer.id}>
+                  {customer.name}
+                </option>
+              ))}
+            </select>
             <input
               id="sale-customer"
               value={customerName}
               onChange={(e) => setCustomerName(e.target.value)}
-              placeholder="Cliente final"
-              className={inputClassName}
+              placeholder="Nombre del cliente"
+              disabled={customerId !== ''}
+              className={`${inputClassName} ${customerId !== '' ? 'opacity-60' : ''}`}
             />
           </div>
 

@@ -4,6 +4,7 @@ import { AuthModule } from './auth/auth.module';
 import { UsersModule } from './users/users.module';
 import { NotionModule } from './notion/notion.module';
 import { ProductsModule } from './products/products.module';
+import { CustomersModule } from './customers/customers.module';
 import { SalesModule } from './sales/sales.module';
 import { StatsModule } from './stats/stats.module';
 
@@ -16,6 +17,7 @@ import { StatsModule } from './stats/stats.module';
     UsersModule,
     NotionModule,
     ProductsModule,
+    CustomersModule,
     SalesModule,
     StatsModule,
   ],

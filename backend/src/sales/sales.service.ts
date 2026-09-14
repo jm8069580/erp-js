@@ -14,6 +14,7 @@ const SALE_INCLUDE = {
       product: true,
     },
   },
+  customer: true,
   createdBy: {
     select: {
       id: true,
@@ -33,7 +34,13 @@ export class SalesService {
   async create(createSaleDto: CreateSaleDto, userId: string) {
     return this.prisma.$transaction(async (tx) => {
       let total = 0;
+      let customerName = createSaleDto.customerName;
       const items: Prisma.SaleItemCreateWithoutSaleInput[] = [];
+
+      if (createSaleDto.customerId) {
+        const customer = await this.findCustomerTx(tx, createSaleDto.customerId);
+        customerName = customer.name;
+      }
 
       for (const item of createSaleDto.items) {
         const product = await tx.product.findUnique({
@@ -67,14 +74,20 @@ export class SalesService {
         });
       }
 
+      const data: Prisma.SaleUncheckedCreateInput = {
+        customerName,
+        status: createSaleDto.status,
+        total,
+        createdById: userId,
+        items: { create: items },
+      };
+
+      if (createSaleDto.customerId) {
+        data.customerId = createSaleDto.customerId;
+      }
+
       return tx.sale.create({
-        data: {
-          customerName: createSaleDto.customerName,
-          status: createSaleDto.status,
-          total,
-          createdById: userId,
-          items: { create: items },
-        },
+        data,
         include: SALE_INCLUDE,
       });
     });
@@ -104,12 +117,20 @@ export class SalesService {
 
       await this.applyStatusChange(tx, sale, updateSaleDto.status);
 
+      const data: Prisma.SaleUpdateInput = {
+        customerName: updateSaleDto.customerName ?? sale.customerName,
+        status: updateSaleDto.status ?? sale.status,
+      };
+
+      if (updateSaleDto.customerId !== undefined) {
+        const customer = await this.findCustomerTx(tx, updateSaleDto.customerId);
+        data.customer = { connect: { id: customer.id } };
+        data.customerName = customer.name;
+      }
+
       return tx.sale.update({
         where: { id },
-        data: {
-          customerName: updateSaleDto.customerName ?? sale.customerName,
-          status: updateSaleDto.status ?? sale.status,
-        },
+        data,
         include: SALE_INCLUDE,
       });
     });
@@ -138,6 +159,14 @@ export class SalesService {
       throw new NotFoundException(`Sale with ID ${id} not found`);
     }
     return sale;
+  }
+
+  private async findCustomerTx(tx: SaleClient, id: string) {
+    const customer = await tx.customer.findUnique({ where: { id } });
+    if (!customer || !customer.isActive) {
+      throw new BadRequestException(`Customer ${id} not found or is inactive`);
+    }
+    return customer;
   }
 
   private async applyStatusChange(
