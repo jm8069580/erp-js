@@ -6,8 +6,7 @@ import { Users, Package, ShoppingCart, TrendingUp } from 'lucide-react';
 interface Stats {
   users: { total: number; active: number };
   products: { total: number; active: number };
-  sales: number;
-  revenue: number;
+  sales: { total: number; revenue: number };
 }
 
 export default function DashboardPage() {
@@ -36,8 +35,18 @@ export default function DashboardPage() {
       icon: Package,
       color: 'bg-green-500',
     },
-    { name: 'Ventas', value: '—', icon: ShoppingCart, color: 'bg-yellow-500' },
-    { name: 'Ingresos', value: '—', icon: TrendingUp, color: 'bg-purple-500' },
+    {
+      name: 'Ventas',
+      value: stats ? String(stats.sales.total) : loading ? '...' : '—',
+      icon: ShoppingCart,
+      color: 'bg-yellow-500',
+    },
+    {
+      name: 'Ingresos',
+      value: stats ? `$${stats.sales.revenue.toFixed(2)}` : loading ? '...' : '—',
+      icon: TrendingUp,
+      color: 'bg-purple-500',
+    },
   ];
 
   return (
