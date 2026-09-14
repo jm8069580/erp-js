@@ -13,6 +13,12 @@ enum Role {
   MANAGER
 }
 
+enum SaleStatus {
+  PENDING
+  COMPLETED
+  CANCELLED
+}
+
 model User {
   id        String   @id @default(uuid())
   email     String   @unique
@@ -23,6 +29,8 @@ model User {
   isActive  Boolean  @default(true)
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
+
+  sales Sale[]
 
   @@map("users")
 }
@@ -38,5 +46,35 @@ model Product {
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
 
+  saleItems SaleItem[]
+
   @@map("products")
+}
+
+model Sale {
+  id           String     @id @default(uuid())
+  number       Int        @unique @default(autoincrement())
+  customerName String?
+  status       SaleStatus @default(COMPLETED)
+  total        Float      @default(0)
+  createdById  String
+  createdBy    User       @relation(fields: [createdById], references: [id])
+  items        SaleItem[]
+  createdAt    DateTime   @default(now())
+  updatedAt    DateTime   @updatedAt
+
+  @@map("sales")
+}
+
+model SaleItem {
+  id        String  @id @default(uuid())
+  saleId    String
+  sale      Sale    @relation(fields: [saleId], references: [id], onDelete: Cascade)
+  productId String
+  product   Product @relation(fields: [productId], references: [id])
+  quantity  Int
+  unitPrice Float
+  subtotal  Float
+
+  @@map("sale_items")
 }

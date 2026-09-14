@@ -1,4 +1,8 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import {
+  Injectable,
+  NotFoundException,
+  ConflictException,
+} from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import { CreateProductDto } from './dto/create-product.dto';
 import { UpdateProductDto } from './dto/update-product.dto';
@@ -37,6 +41,16 @@ export class ProductsService {
 
   async remove(id: string) {
     await this.findOne(id);
+
+    const relatedSaleItems = await this.prisma.saleItem.count({
+      where: { productId: id },
+    });
+    if (relatedSaleItems > 0) {
+      throw new ConflictException(
+        'Cannot delete product because it has related sales records. Set isActive=false instead.',
+      );
+    }
+
     return this.prisma.product.delete({ where: { id } });
   }
 }

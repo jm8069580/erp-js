@@ -4,6 +4,7 @@ import { AuthModule } from './auth/auth.module';
 import { UsersModule } from './users/users.module';
 import { NotionModule } from './notion/notion.module';
 import { ProductsModule } from './products/products.module';
+import { SalesModule } from './sales/sales.module';
 import { StatsModule } from './stats/stats.module';
 
 @Module({
@@ -15,6 +16,7 @@ import { StatsModule } from './stats/stats.module';
     UsersModule,
     NotionModule,
     ProductsModule,
+    SalesModule,
     StatsModule,
   ],
   controllers: [],
