@@ -71,6 +71,7 @@ erp-js/
 │   │   ├── auth/           # Módulo de autenticación
 │   │   ├── users/          # Módulo de usuarios
 │   │   ├── products/       # Módulo de productos
+│   │   ├── sales/          # Módulo de ventas
 │   │   ├── stats/          # Módulo de estadísticas
 │   │   ├── notion/         # Módulo Notion (opcional)
 │   │   ├── prisma/         # Servicio Prisma
@@ -109,7 +110,14 @@ erp-js/
 - `POST /api/v1/products` - Crear producto
 - `GET /api/v1/products/:id` - Obtener producto
 - `PATCH /api/v1/products/:id` - Actualizar producto
-- `DELETE /api/v1/products/:id` - Eliminar producto
+- `DELETE /api/v1/products/:id` - Eliminar producto (bloqueado si tiene ventas asociadas)
+
+### Sales (crear: cualquier usuario autenticado; gestión ADMIN/MANAGER)
+- `GET /api/v1/sales` - Listar ventas
+- `POST /api/v1/sales` - Crear venta (valida y decrementa stock)
+- `GET /api/v1/sales/:id` - Obtener venta
+- `PATCH /api/v1/sales/:id` - Actualizar venta (nombre de cliente o estado; cancelar repone stock)
+- `DELETE /api/v1/sales/:id` - Eliminar venta (reponer stock)
 
 ## Configuración
 
