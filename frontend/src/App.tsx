@@ -6,6 +6,7 @@ import DashboardPage from './pages/DashboardPage';
 import UsersPage from './pages/UsersPage';
 import ProductsPage from './pages/ProductsPage';
 import CustomersPage from './pages/CustomersPage';
+import InventoryPage from './pages/InventoryPage';
 import SalesPage from './pages/SalesPage';
 import MainLayout from './layouts/MainLayout';
 import RequireRole from './components/RequireRole';
@@ -50,6 +51,7 @@ function App() {
         />
         <Route path="products" element={<ProductsPage />} />
         <Route path="customers" element={<CustomersPage />} />
+        <Route path="inventory" element={<InventoryPage />} />
         <Route path="sales" element={<SalesPage />} />
       </Route>
       <Route path="*" element={<Navigate to="/" replace />} />

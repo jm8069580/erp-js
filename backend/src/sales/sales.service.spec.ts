@@ -32,6 +32,9 @@ describe('SalesService', () => {
       customer: {
         findUnique: jest.fn(),
       },
+      inventoryMovement: {
+        create: jest.fn(),
+      },
       sale: {
         findUnique: jest.fn(),
         findMany: jest.fn(),
@@ -60,7 +63,7 @@ describe('SalesService', () => {
     it('creates a sale and decrements stock', async () => {
       prisma.product.findUnique.mockResolvedValue(product);
       prisma.product.update.mockResolvedValue({ ...product, stock: 8 });
-      prisma.sale.create.mockResolvedValue({ id: 'sale-1' });
+      prisma.sale.create.mockResolvedValue({ id: 'sale-1', number: 4 });
 
       await service.create(
         {
@@ -96,6 +99,19 @@ describe('SalesService', () => {
           }),
         }),
       );
+      expect(prisma.inventoryMovement.create).toHaveBeenCalledWith(
+        expect.objectContaining({
+          data: expect.objectContaining({
+            productId: 'prod-1',
+            type: 'EXIT',
+            quantity: 2,
+            stockAfter: 8,
+            reason: 'Venta SALE-0004',
+            saleId: 'sale-1',
+            createdById: 'user-1',
+          }),
+        }),
+      );
     });
 
     it('rejects an unknown or inactive product', async () => {
@@ -108,6 +124,7 @@ describe('SalesService', () => {
         ),
       ).rejects.toThrow(BadRequestException);
       expect(prisma.sale.create).not.toHaveBeenCalled();
+      expect(prisma.inventoryMovement.create).not.toHaveBeenCalled();
     });
 
     it('links a customer by id and uses its name', async () => {

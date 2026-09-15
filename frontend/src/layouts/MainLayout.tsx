@@ -1,6 +1,6 @@
 import { Outlet, useNavigate, NavLink } from 'react-router-dom';
 import { useAuthStore } from '../store/auth.store';
-import { LogOut, Menu, X, LayoutDashboard, Users, Package, ShoppingCart, Contact } from 'lucide-react';
+import { LogOut, Menu, X, LayoutDashboard, Users, Package, ShoppingCart, Contact, Boxes } from 'lucide-react';
 import { useState } from 'react';
 
 const navItems = [
@@ -8,6 +8,7 @@ const navItems = [
   { to: '/users', label: 'Usuarios', icon: Users, roles: ['ADMIN'] },
   { to: '/products', label: 'Productos', icon: Package, roles: null },
   { to: '/customers', label: 'Clientes', icon: Contact, roles: null },
+  { to: '/inventory', label: 'Inventario', icon: Boxes, roles: null },
   { to: '/sales', label: 'Ventas', icon: ShoppingCart, roles: null },
 ];
 

@@ -3,7 +3,7 @@ import {
   Injectable,
   NotFoundException,
 } from '@nestjs/common';
-import { Prisma } from '@prisma/client';
+import { InventoryMovementType, Prisma } from '@prisma/client';
 import { PrismaService } from '../prisma/prisma.service';
 import { CreateSaleDto } from './dto/create-sale.dto';
 import { UpdateSaleDto } from './dto/update-sale.dto';
@@ -36,6 +36,11 @@ export class SalesService {
       let total = 0;
       let customerName = createSaleDto.customerName;
       const items: Prisma.SaleItemCreateWithoutSaleInput[] = [];
+      const exits: {
+        productId: string;
+        quantity: number;
+        stockAfter: number;
+      }[] = [];
 
       if (createSaleDto.customerId) {
         const customer = await this.findCustomerTx(tx, createSaleDto.customerId);
@@ -68,9 +73,14 @@ export class SalesService {
           subtotal,
         });
 
-        await tx.product.update({
+        const updated = await tx.product.update({
           where: { id: product.id },
           data: { stock: { decrement: item.quantity } },
+        });
+        exits.push({
+          productId: product.id,
+          quantity: item.quantity,
+          stockAfter: updated.stock,
         });
       }
 
@@ -86,10 +96,27 @@ export class SalesService {
         data.customerId = createSaleDto.customerId;
       }
 
-      return tx.sale.create({
+      const sale = await tx.sale.create({
         data,
         include: SALE_INCLUDE,
       });
+
+      const label = `Venta SALE-${String(sale.number).padStart(4, '0')}`;
+      for (const exit of exits) {
+        await tx.inventoryMovement.create({
+          data: {
+            productId: exit.productId,
+            type: InventoryMovementType.EXIT,
+            quantity: exit.quantity,
+            stockAfter: exit.stockAfter,
+            reason: label,
+            saleId: sale.id,
+            createdById: userId,
+          },
+        });
+      }
+
+      return sale;
     });
   }
 
