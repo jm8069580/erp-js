@@ -1,6 +1,6 @@
 import { Outlet, useNavigate, NavLink } from 'react-router-dom';
 import { useAuthStore } from '../store/auth.store';
-import { LogOut, Menu, X, LayoutDashboard, Users, Package, ShoppingCart, Contact, Boxes } from 'lucide-react';
+import { LogOut, Menu, X, LayoutDashboard, Users, Package, ShoppingCart, Contact, Boxes, BookOpen, ScrollText, FileText, BarChart3 } from 'lucide-react';
 import { useState } from 'react';
 
 const navItems = [
@@ -10,6 +10,10 @@ const navItems = [
   { to: '/customers', label: 'Clientes', icon: Contact, roles: null },
   { to: '/inventory', label: 'Inventario', icon: Boxes, roles: null },
   { to: '/sales', label: 'Ventas', icon: ShoppingCart, roles: null },
+  { to: '/accounts', label: 'Catálogo de Cuentas', icon: BookOpen, roles: null },
+  { to: '/journal', label: 'Asientos', icon: ScrollText, roles: null },
+  { to: '/invoices', label: 'Facturas', icon: FileText, roles: null },
+  { to: '/reporting', label: 'Reportes', icon: BarChart3, roles: null },
 ];
 
 export default function MainLayout() {

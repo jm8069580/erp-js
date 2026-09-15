@@ -8,6 +8,8 @@ import { CustomersModule } from './customers/customers.module';
 import { InventoryModule } from './inventory/inventory.module';
 import { SalesModule } from './sales/sales.module';
 import { StatsModule } from './stats/stats.module';
+import { AccountingModule } from './accounting/accounting.module';
+import { InvoicesModule } from './invoices/invoices.module';
 
 @Module({
   imports: [
@@ -22,6 +24,8 @@ import { StatsModule } from './stats/stats.module';
     InventoryModule,
     SalesModule,
     StatsModule,
+    AccountingModule,
+    InvoicesModule,
   ],
   controllers: [],
   providers: [],

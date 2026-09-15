@@ -25,6 +25,32 @@ enum InventoryMovementType {
   ADJUSTMENT
 }
 
+enum AccountType {
+  ACTIVO
+  PASIVO
+  PATRIMONIO
+  INGRESO
+  COSTO
+  GASTO
+}
+
+enum AccountNature {
+  DEBITO
+  CREDITO
+}
+
+enum JournalEntryStatus {
+  DRAFT
+  BOOKED
+  CANCELLED
+}
+
+enum InvoiceStatus {
+  DRAFT
+  COMPLETED
+  ANNULLED
+}
+
 model User {
   id        String   @id @default(uuid())
   email     String   @unique
@@ -38,6 +64,8 @@ model User {
 
   sales Sale[]
   inventoryMovements InventoryMovement[]
+  journalEntries JournalEntry[]
+  invoices Invoice[]
 
   @@map("users")
 }
@@ -73,6 +101,7 @@ model Customer {
   updatedAt DateTime @updatedAt
 
   sales Sale[]
+  invoices Invoice[]
 
   @@map("customers")
 }
@@ -89,6 +118,8 @@ model Sale {
   createdBy    User       @relation(fields: [createdById], references: [id])
   items        SaleItem[]
   inventoryMovements InventoryMovement[]
+  invoices Invoice[]
+
   createdAt    DateTime   @default(now())
   updatedAt    DateTime   @updatedAt
 
@@ -124,4 +155,107 @@ model SaleItem {
   subtotal  Float
 
   @@map("sale_items")
+}
+
+model Account {
+  id        String        @id @default(uuid())
+  code      String        @unique
+  name      String
+  type      AccountType
+  nature    AccountNature
+  parentId  String?
+  parent    Account?      @relation("AccountTree", fields: [parentId], references: [id])
+  children  Account[]     @relation("AccountTree")
+  isActive  Boolean       @default(true)
+  createdAt DateTime      @default(now())
+  updatedAt DateTime      @updatedAt
+
+  journalLines JournalEntryLine[]
+
+  @@map("accounts")
+  @@index([parentId])
+}
+
+model JournalEntry {
+  id           String             @id @default(uuid())
+  number       Int                @unique @default(autoincrement())
+  date         DateTime           @default(now())
+  concept      String
+  reference    String?
+  status       JournalEntryStatus @default(DRAFT)
+  invoiceId    String?            @unique
+  invoice      Invoice?           @relation("InvoiceEntry", fields: [invoiceId], references: [id])
+  reversalOfId String?            @unique
+  reversalOf   Invoice?           @relation("InvoiceReversal", fields: [reversalOfId], references: [id])
+  createdById  String
+  createdBy    User               @relation(fields: [createdById], references: [id])
+  lines        JournalEntryLine[]
+  createdAt    DateTime           @default(now())
+  updatedAt    DateTime           @updatedAt
+
+  @@map("journal_entries")
+}
+
+model JournalEntryLine {
+  id          String  @id @default(uuid())
+  entryId     String
+  entry       JournalEntry @relation(fields: [entryId], references: [id], onDelete: Cascade)
+  accountId   String
+  account     Account @relation(fields: [accountId], references: [id])
+  description String?
+  debit       Float   @default(0)
+  credit      Float   @default(0)
+
+  @@map("journal_entry_lines")
+  @@index([entryId])
+  @@index([accountId])
+}
+
+model AccountingConfig {
+  id                 Int    @id @default(1)
+  salesAccountId     String
+  itbmsAccountId     String
+  receivableAccountId String
+
+  @@map("accounting_config")
+}
+
+model Invoice {
+  id              String        @id @default(uuid())
+  number          Int           @unique @default(autoincrement())
+  serie           String        @default("A")
+  folio           Int
+  date            DateTime      @default(now())
+  customerId      String?
+  customer        Customer?     @relation(fields: [customerId], references: [id])
+  customerName    String
+  subtotal        Float         @default(0)
+  itbms           Float         @default(0)
+  total           Float         @default(0)
+  status          InvoiceStatus @default(DRAFT)
+  createdById     String
+  createdBy       User          @relation(fields: [createdById], references: [id])
+  saleId          String?
+  sale            Sale?         @relation(fields: [saleId], references: [id])
+  items           InvoiceItem[]
+  journalEntry    JournalEntry? @relation("InvoiceEntry")
+  reversalEntry   JournalEntry? @relation("InvoiceReversal")
+  createdAt       DateTime      @default(now())
+  updatedAt       DateTime      @updatedAt
+
+  @@unique([serie, folio])
+  @@map("invoices")
+}
+
+model InvoiceItem {
+  id          String  @id @default(uuid())
+  invoiceId   String
+  invoice     Invoice @relation(fields: [invoiceId], references: [id], onDelete: Cascade)
+  description String
+  quantity    Int     @default(1)
+  unitPrice   Float
+  itbmsRate   Float   @default(0.07)
+  subtotal    Float
+
+  @@map("invoice_items")
 }

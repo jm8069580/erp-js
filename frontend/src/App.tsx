@@ -8,6 +8,10 @@ import ProductsPage from './pages/ProductsPage';
 import CustomersPage from './pages/CustomersPage';
 import InventoryPage from './pages/InventoryPage';
 import SalesPage from './pages/SalesPage';
+import ChartOfAccountsPage from './pages/ChartOfAccountsPage';
+import JournalPage from './pages/JournalPage';
+import InvoicesPage from './pages/InvoicesPage';
+import ReportingPage from './pages/ReportingPage';
 import MainLayout from './layouts/MainLayout';
 import RequireRole from './components/RequireRole';
 
@@ -53,6 +57,10 @@ function App() {
         <Route path="customers" element={<CustomersPage />} />
         <Route path="inventory" element={<InventoryPage />} />
         <Route path="sales" element={<SalesPage />} />
+        <Route path="accounts" element={<ChartOfAccountsPage />} />
+        <Route path="journal" element={<JournalPage />} />
+        <Route path="invoices" element={<InvoicesPage />} />
+        <Route path="reporting" element={<ReportingPage />} />
       </Route>
       <Route path="*" element={<Navigate to="/" replace />} />
     </Routes>
