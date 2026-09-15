@@ -1,5 +1,5 @@
 import { Test } from '@nestjs/testing';
-import { BadRequestException, NotFoundException } from '@nestjs/common';
+import { NotFoundException } from '@nestjs/common';
 import { JournalEntryStatus } from '@prisma/client';
 import { JournalService } from './journal.service';
 import { PrismaService } from '../prisma/prisma.service';
@@ -57,7 +57,7 @@ describe('JournalService', () => {
       prisma.account.findUnique
         .mockResolvedValueOnce(account1)
         .mockResolvedValueOnce(account2);
-      prisma.journalEntry.create.mockImplementation(({ data, include }: any) =>
+      prisma.journalEntry.create.mockImplementation(({ data }: any) =>
         Promise.resolve({ ...draftEntry, ...data, lines: data.lines?.create, id: 'je-new' }),
       );
     });

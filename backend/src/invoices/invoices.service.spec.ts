@@ -1,5 +1,5 @@
 import { Test } from '@nestjs/testing';
-import { BadRequestException, NotFoundException } from '@nestjs/common';
+import { NotFoundException } from '@nestjs/common';
 import { InvoicesService } from './invoices.service';
 import { PrismaService } from '../prisma/prisma.service';
 
@@ -8,7 +8,6 @@ describe('InvoicesService', () => {
   let prisma: any;
 
   const customer = { id: 'cust-1', name: 'Juan Perez', isActive: true };
-  const sale = { id: 'sale-1', number: 1, total: 100 };
   const config = { id: 1, salesAccountId: 'sales-acc', itbmsAccountId: 'itbms-acc', receivableAccountId: 'recv-acc' };
   const accountSales = { id: 'sales-acc', type: 'INGRESO', isActive: true };
   const accountItbms = { id: 'itbms-acc', type: 'PASIVO', isActive: true };
@@ -67,7 +66,7 @@ describe('InvoicesService', () => {
       prisma.$transaction.mockImplementation(async (cb: any) => cb(prisma));
       prisma.customer.findUnique.mockResolvedValue(customer);
       prisma.invoice.findFirst.mockResolvedValue(null);
-      prisma.invoice.create.mockImplementation(({ data, include }: any) =>
+      prisma.invoice.create.mockImplementation(({ data }: any) =>
         Promise.resolve({ ...draftInvoice, ...data, id: 'inv-new', items: data.items?.create ?? [] }),
       );
 
