@@ -2,10 +2,12 @@ import { Test } from '@nestjs/testing';
 import { NotFoundException } from '@nestjs/common';
 import { InvoicesService } from './invoices.service';
 import { PrismaService } from '../prisma/prisma.service';
+import { FelService } from '../fel/fel.service';
 
 describe('InvoicesService', () => {
   let service: InvoicesService;
   let prisma: any;
+  let fel: any;
 
   const customer = { id: 'cust-1', name: 'Juan Perez', isActive: true };
   const config = { id: 1, salesAccountId: 'sales-acc', itbmsAccountId: 'itbms-acc', receivableAccountId: 'recv-acc' };
@@ -26,6 +28,7 @@ describe('InvoicesService', () => {
     itbms: 7,
     total: 107,
     status: 'DRAFT',
+    felStatus: 'NONE',
     createdById: 'user-1',
   };
 
@@ -51,10 +54,17 @@ describe('InvoicesService', () => {
       sale: { findUnique: jest.fn() },
     };
 
+    fel = {
+      enabled: false,
+      enviar: jest.fn(),
+      anular: jest.fn(),
+    };
+
     const moduleRef = await Test.createTestingModule({
       providers: [
         InvoicesService,
         { provide: PrismaService, useValue: prisma },
+        { provide: FelService, useValue: fel },
       ],
     }).compile();
 
@@ -220,6 +230,50 @@ describe('InvoicesService', () => {
 
       await expect(service.complete('bad-id', 'user-1')).rejects.toThrow(NotFoundException);
     });
+
+    it('sends the invoice to FEL when enabled and authorized', async () => {
+      fel.enabled = true;
+      fel.enviar.mockResolvedValue({ accepted: true, cufe: 'cufe-1' });
+      prisma.$transaction.mockImplementation(async (cb: any) => cb(prisma));
+      prisma.invoice.findUnique.mockResolvedValue(draftInvoice);
+      prisma.journalEntry.findUnique.mockResolvedValue(null);
+      prisma.accountingConfig.findUnique.mockResolvedValue(config);
+      prisma.account.findUnique
+        .mockResolvedValueOnce(accountRecv)
+        .mockResolvedValueOnce(accountSales)
+        .mockResolvedValueOnce(accountItbms);
+      prisma.journalEntry.create.mockResolvedValue({});
+      prisma.invoice.update.mockResolvedValue(completedInvoice);
+
+      await service.complete('inv-1', 'user-1');
+
+      expect(fel.enviar).toHaveBeenCalledWith('inv-1');
+    });
+
+    it('marks invoice as PENDING_FEL when FEL submit fails', async () => {
+      fel.enabled = true;
+      fel.enviar.mockRejectedValue(new Error('timeout'));
+      prisma.$transaction.mockImplementation(async (cb: any) => cb(prisma));
+      prisma.invoice.findUnique.mockResolvedValue(draftInvoice);
+      prisma.journalEntry.findUnique.mockResolvedValue(null);
+      prisma.accountingConfig.findUnique.mockResolvedValue(config);
+      prisma.account.findUnique
+        .mockResolvedValueOnce(accountRecv)
+        .mockResolvedValueOnce(accountSales)
+        .mockResolvedValueOnce(accountItbms);
+      prisma.journalEntry.create.mockResolvedValue({});
+      prisma.invoice.update.mockResolvedValue(completedInvoice);
+
+      await service.complete('inv-1', 'user-1');
+
+      expect(prisma.invoice.update).toHaveBeenLastCalledWith({
+        where: { id: 'inv-1' },
+        data: {
+          felStatus: 'PENDING_FEL',
+          felMessage: expect.stringContaining('timeout'),
+        },
+      });
+    });
   });
 
   describe('annul', () => {
@@ -270,6 +324,65 @@ describe('InvoicesService', () => {
       prisma.invoice.findUnique.mockResolvedValue(null);
 
       await expect(service.annul('bad-id', 'user-1')).rejects.toThrow(NotFoundException);
+    });
+
+    it('sends the annullment to FEL when enabled and invoice was FEL-sent', async () => {
+      fel.enabled = true;
+      fel.anular.mockResolvedValue({ accepted: true });
+      prisma.$transaction.mockImplementation(async (cb: any) => cb(prisma));
+      prisma.invoice.findUnique.mockResolvedValue({
+        ...completedInvoice,
+        felStatus: 'AUTHORIZED',
+      });
+      prisma.journalEntry.findUnique.mockResolvedValue(null);
+      prisma.accountingConfig.findUnique.mockResolvedValue(config);
+      prisma.account.findUnique
+        .mockResolvedValueOnce(accountRecv)
+        .mockResolvedValueOnce(accountSales)
+        .mockResolvedValueOnce(accountItbms);
+      prisma.journalEntry.create.mockResolvedValue({});
+      prisma.invoice.update.mockResolvedValue({
+        ...completedInvoice,
+        felStatus: 'AUTHORIZED',
+        status: 'ANNULLED',
+      });
+
+      await service.annul('inv-1', 'user-1');
+
+      expect(fel.anular).toHaveBeenCalledWith('inv-1', 'Anulación de factura');
+    });
+
+    it('keeps accounting annul working even if FEL annul fails', async () => {
+      fel.enabled = true;
+      fel.anular.mockRejectedValue(new Error('pac down'));
+      prisma.$transaction.mockImplementation(async (cb: any) => cb(prisma));
+      prisma.invoice.findUnique.mockResolvedValue({
+        ...completedInvoice,
+        felStatus: 'AUTHORIZED',
+      });
+      prisma.journalEntry.findUnique.mockResolvedValue(null);
+      prisma.accountingConfig.findUnique.mockResolvedValue(config);
+      prisma.account.findUnique
+        .mockResolvedValueOnce(accountRecv)
+        .mockResolvedValueOnce(accountSales)
+        .mockResolvedValueOnce(accountItbms);
+      prisma.journalEntry.create.mockResolvedValue({});
+      prisma.invoice.update.mockResolvedValue({
+        ...completedInvoice,
+        felStatus: 'AUTHORIZED',
+        status: 'ANNULLED',
+      });
+
+      const result = await service.annul('inv-1', 'user-1');
+
+      expect(result.status).toBe('ANNULLED');
+      expect(prisma.invoice.update).toHaveBeenLastCalledWith({
+        where: { id: 'inv-1' },
+        data: {
+          felStatus: 'PENDING_FEL',
+          felMessage: expect.stringContaining('pac down'),
+        },
+      });
     });
   });
 });

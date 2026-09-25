@@ -51,6 +51,14 @@ enum InvoiceStatus {
   ANNULLED
 }
 
+enum FelInvoiceStatus {
+  NONE
+  PENDING_FEL
+  AUTHORIZED
+  REJECTED
+  ANNULLED
+}
+
 model User {
   id        String   @id @default(uuid())
   email     String   @unique
@@ -95,6 +103,13 @@ model Customer {
   phone     String?
   address   String?
   taxId     String?
+  felRuc    String?
+  felDv     String?
+  provincia String?
+  distrito  String?
+  corregimiento String?
+  codigoUbicacion String?
+  pais      String   @default("PA")
   notes     String?
   isActive  Boolean  @default(true)
   createdAt DateTime @default(now())
@@ -220,6 +235,23 @@ model AccountingConfig {
   @@map("accounting_config")
 }
 
+model FelConfig {
+  id              Int    @id @default(1)
+  razonSocial     String
+  ruc             String
+  dv              String
+  direccion       String
+  codigoUbicacion String
+  provincia       String
+  distrito        String
+  corregimiento   String
+  sucursal        String @default("0000")
+  punto           String @default("001")
+  pais            String @default("PA")
+
+  @@map("fel_config")
+}
+
 model Invoice {
   id              String        @id @default(uuid())
   number          Int           @unique @default(autoincrement())
@@ -233,6 +265,12 @@ model Invoice {
   itbms           Float         @default(0)
   total           Float         @default(0)
   status          InvoiceStatus @default(DRAFT)
+  felStatus       FelInvoiceStatus @default(NONE)
+  cufe            String?
+  protocolo       String?
+  felMessage      String?
+  felEnviadoAt    DateTime?
+  felAnuladoAt    DateTime?
   createdById     String
   createdBy       User          @relation(fields: [createdById], references: [id])
   saleId          String?

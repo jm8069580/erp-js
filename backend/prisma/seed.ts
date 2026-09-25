@@ -403,6 +403,29 @@ async function seedChartOfAccounts() {
   console.log(`Chart of accounts ready (${CHART_OF_ACCOUNTS.length} accounts)`);
 }
 
+async function seedFelConfig() {
+  await prisma.felConfig.upsert({
+    where: { id: 1 },
+    update: {},
+    create: {
+      id: 1,
+      razonSocial: process.env.FEL_RAZON_SOCIAL || 'Mi Empresa S.A.',
+      ruc: process.env.FEL_RUC || '00000000-0-00000',
+      dv: process.env.FEL_DV || '00',
+      direccion: process.env.FEL_DIRECCION || 'Sin dirección configurada',
+      codigoUbicacion: process.env.FEL_CODIGO_UBICACION || '0-0-0',
+      provincia: process.env.FEL_PROVINCIA || 'PANAMA',
+      distrito: process.env.FEL_DISTRITO || 'PANAMA',
+      corregimiento: process.env.FEL_CORREGIMIENTO || 'SAN FELIPE',
+      sucursal: process.env.FEL_SUCURSAL || '0000',
+      punto: process.env.FEL_PUNTO || '001',
+      pais: process.env.FEL_PAIS || 'PA',
+    },
+  });
+
+  console.log('FEL config ready (id=1)');
+}
+
 async function main() {
   const email = process.env.ADMIN_EMAIL || 'admin@erp.com';
   const password = process.env.ADMIN_PASSWORD || 'admin123';
@@ -424,6 +447,7 @@ async function main() {
   console.log(`Admin user ready: ${admin.email}`);
 
   await seedChartOfAccounts();
+  await seedFelConfig();
 }
 
 main()

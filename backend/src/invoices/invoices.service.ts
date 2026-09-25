@@ -5,6 +5,7 @@ import {
 } from '@nestjs/common';
 import { JournalEntryStatus, Prisma } from '@prisma/client';
 import { PrismaService } from '../prisma/prisma.service';
+import { FelService } from '../fel/fel.service';
 import { CreateInvoiceDto } from './dto/create-invoice.dto';
 import { ListInvoicesQueryDto } from './dto/list-invoices.query';
 import { round2 } from '../accounting/money.util';
@@ -39,7 +40,10 @@ type InvoiceClient = Prisma.TransactionClient;
 
 @Injectable()
 export class InvoicesService {
-  constructor(private prisma: PrismaService) {}
+  constructor(
+    private prisma: PrismaService,
+    private fel: FelService,
+  ) {}
 
   async create(dto: CreateInvoiceDto, userId: string) {
     return this.prisma.$transaction(async (tx) => {
@@ -121,7 +125,7 @@ export class InvoicesService {
   }
 
   async complete(id: string, userId: string) {
-    return this.prisma.$transaction(async (tx) => {
+    const invoice = await this.prisma.$transaction(async (tx) => {
       const invoice = await this.findInvoiceTx(tx, id);
       if (invoice.status !== 'DRAFT') {
         throw new BadRequestException(
@@ -185,10 +189,29 @@ export class InvoicesService {
         include: INVOICE_INCLUDE,
       });
     });
+
+    await this.sendFelIfEnabled(invoice.id);
+
+    return invoice;
+  }
+
+  private async sendFelIfEnabled(invoiceId: string) {
+    if (!this.fel.enabled) return;
+    try {
+      await this.fel.enviar(invoiceId);
+    } catch (error) {
+      await this.prisma.invoice.update({
+        where: { id: invoiceId },
+        data: {
+          felStatus: 'PENDING_FEL',
+          felMessage: `Envío FEL falló: ${(error as Error).message}`.slice(0, 500),
+        },
+      });
+    }
   }
 
   async annul(id: string, userId: string) {
-    return this.prisma.$transaction(async (tx) => {
+    const invoice = await this.prisma.$transaction(async (tx) => {
       const invoice = await this.findInvoiceTx(tx, id);
       if (invoice.status !== 'COMPLETED') {
         throw new BadRequestException(
@@ -252,6 +275,25 @@ export class InvoicesService {
         include: INVOICE_INCLUDE,
       });
     });
+
+    if (this.fel.enabled && invoice.felStatus !== 'NONE') {
+      try {
+        await this.fel.anular(invoice.id, 'Anulación de factura');
+      } catch (error) {
+        await this.prisma.invoice.update({
+          where: { id: invoice.id },
+          data: {
+            felStatus: 'PENDING_FEL',
+            felMessage: `Anulación FEL falló: ${(error as Error).message}`.slice(
+              0,
+              500,
+            ),
+          },
+        });
+      }
+    }
+
+    return invoice;
   }
 
   private label(invoice: { serie: string; folio: number }) {

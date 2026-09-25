@@ -10,6 +10,7 @@ import { SalesModule } from './sales/sales.module';
 import { StatsModule } from './stats/stats.module';
 import { AccountingModule } from './accounting/accounting.module';
 import { InvoicesModule } from './invoices/invoices.module';
+import { FelModule } from './fel/fel.module';
 
 @Module({
   imports: [
@@ -26,6 +27,7 @@ import { InvoicesModule } from './invoices/invoices.module';
     StatsModule,
     AccountingModule,
     InvoicesModule,
+    FelModule,
   ],
   controllers: [],
   providers: [],
